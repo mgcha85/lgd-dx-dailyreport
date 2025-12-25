@@ -62,7 +62,6 @@
         uploading = true;
 
         try {
-            // 파일 업로드
             const uploadResult = await uploadFile(selectedFile);
             successMessage.set(
                 `파일이 업로드되었습니다: ${uploadResult.filename}`,
@@ -71,7 +70,6 @@
             uploading = false;
             classifying = true;
 
-            // 분류 실행
             const classifyData = {
                 file_path: uploadResult.file_path,
                 sheet_name: sheetName,
@@ -86,7 +84,6 @@
                 `분류가 완료되었습니다! (성공: ${classifyResult.processed_rows}, 실패: ${classifyResult.failed_rows})`,
             );
 
-            // 결과 탭으로 이동
             setTimeout(() => {
                 currentTab.set("result");
             }, 1500);
@@ -101,227 +98,178 @@
     }
 </script>
 
-<div class="container">
-    <div class="card">
-        <h2>📤 파일 업로드</h2>
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Upload Card -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-7 h-7"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                    />
+                </svg>
+                파일 업로드
+            </h2>
 
-        <div
-            class="upload-area"
-            class:active={dragActive}
-            on:dragover={handleDragOver}
-            on:dragleave={handleDragLeave}
-            on:drop={handleDrop}
-            on:click={() => document.getElementById("fileInput").click()}
-        >
-            <div class="upload-icon">📁</div>
-            <p class="upload-text">클릭하거나 파일을 여기로 드래그하세요</p>
-            <p class="upload-subtext">
-                Excel (.xlsx, .xls) 또는 PowerPoint (.pptx) 파일
-            </p>
+            <div
+                class="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all {dragActive
+                    ? 'border-primary bg-primary/10'
+                    : 'border-base-300 hover:border-primary/50 hover:bg-base-200'}"
+                on:dragover={handleDragOver}
+                on:dragleave={handleDragLeave}
+                on:drop={handleDrop}
+                on:click={() => document.getElementById("fileInput").click()}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-16 h-16 mx-auto mb-4 text-primary"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                    />
+                </svg>
 
-            <input
-                id="fileInput"
-                type="file"
-                class="file-input"
-                accept=".xlsx,.xls,.pptx"
-                on:change={handleFileSelect}
-            />
-        </div>
+                <p class="text-lg font-medium mb-2">
+                    클릭하거나 파일을 여기로 드래그하세요
+                </p>
+                <p class="text-sm text-base-content/60">
+                    Excel (.xlsx, .xls) 또는 PowerPoint (.pptx) 파일
+                </p>
 
-        {#if selectedFile}
-            <div class="selected-file">
-                <span>📄</span>
-                <strong>{fileName}</strong>
+                <input
+                    id="fileInput"
+                    type="file"
+                    class="hidden"
+                    accept=".xlsx,.xls,.pptx"
+                    on:change={handleFileSelect}
+                />
             </div>
-        {/if}
+
+            {#if selectedFile}
+                <div class="alert alert-info">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        class="stroke-current shrink-0 w-6 h-6"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span><strong>{fileName}</strong> 선택됨</span>
+                </div>
+            {/if}
+        </div>
     </div>
 
-    <div class="card">
-        <h2>⚙️ 분류 설정</h2>
+    <!-- Settings Card -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-7 h-7"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
+                    />
+                </svg>
+                분류 설정
+            </h2>
 
-        <div class="form-group">
-            <label for="sheetName">시트 이름</label>
-            <input
-                id="sheetName"
-                type="text"
-                bind:value={sheetName}
-                placeholder="일보_DPU"
-            />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">시트 이름</span>
+                    </label>
+                    <input
+                        type="text"
+                        bind:value={sheetName}
+                        placeholder="일보_DPU"
+                        class="input input-bordered w-full"
+                    />
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">컬럼 이름</span>
+                    </label>
+                    <input
+                        type="text"
+                        bind:value={columnName}
+                        placeholder="Issue"
+                        class="input input-bordered w-full"
+                    />
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-medium">프롬프트</span>
+                </label>
+                <textarea
+                    bind:value={prompt}
+                    placeholder="분류 프롬프트를 입력하세요..."
+                    class="textarea textarea-bordered h-24"
+                ></textarea>
+            </div>
+
+            <div class="card-actions justify-end mt-4">
+                <button
+                    class="btn btn-primary btn-lg w-full md:w-auto"
+                    on:click={handleUploadAndClassify}
+                    disabled={uploading || classifying}
+                >
+                    {#if uploading}
+                        <span class="loading loading-spinner"></span>
+                        파일 업로드 중...
+                    {:else if classifying}
+                        <span class="loading loading-spinner"></span>
+                        분류 진행 중...
+                    {:else}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="w-6 h-6"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
+                            />
+                        </svg>
+                        업로드 및 분류 시작
+                    {/if}
+                </button>
+            </div>
         </div>
-
-        <div class="form-group">
-            <label for="columnName">컬럼 이름</label>
-            <input
-                id="columnName"
-                type="text"
-                bind:value={columnName}
-                placeholder="Issue"
-            />
-        </div>
-
-        <div class="form-group">
-            <label for="prompt">프롬프트</label>
-            <textarea
-                id="prompt"
-                bind:value={prompt}
-                placeholder="분류 프롬프트를 입력하세요..."
-            ></textarea>
-        </div>
-
-        <button
-            class="btn"
-            on:click={handleUploadAndClassify}
-            disabled={uploading || classifying}
-        >
-            {#if uploading}
-                <span class="loading"></span> 파일 업로드 중...
-            {:else if classifying}
-                <span class="loading"></span> 분류 진행 중...
-            {:else}
-                🚀 업로드 및 분류 시작
-            {/if}
-        </button>
     </div>
 </div>
-
-<style>
-    .container {
-        max-width: 700px;
-    }
-
-    .card {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        margin-bottom: 1.5rem;
-    }
-
-    h2 {
-        margin: 0 0 1.5rem 0;
-        color: #1a1a1a;
-        font-size: 1.5rem;
-    }
-
-    .upload-area {
-        border: 2px dashed #cbd5e0;
-        border-radius: 12px;
-        padding: 3rem 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .upload-area.active {
-        border-color: #667eea;
-        background: #f0f3ff;
-    }
-
-    .upload-area:hover {
-        border-color: #667eea;
-        background: #fafbff;
-    }
-
-    .upload-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-    }
-
-    .upload-text {
-        color: #4a5568;
-        margin-bottom: 0.5rem;
-    }
-
-    .upload-subtext {
-        color: #a0aec0;
-        font-size: 0.875rem;
-    }
-
-    .file-input {
-        display: none;
-    }
-
-    .selected-file {
-        background: #f7fafc;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: #4a5568;
-        font-weight: 500;
-    }
-
-    input[type="text"],
-    textarea {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #cbd5e0;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    textarea:focus {
-        outline: none;
-        border-color: #667eea;
-    }
-
-    textarea {
-        min-height: 100px;
-        resize: vertical;
-        font-family: inherit;
-    }
-
-    .btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 0.875rem 2rem;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s;
-        width: 100%;
-    }
-
-    .btn:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .loading {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid #fff;
-        border-top-color: transparent;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-</style>
