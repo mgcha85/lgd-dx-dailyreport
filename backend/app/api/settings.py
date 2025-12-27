@@ -1,11 +1,42 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import UserSettings
 from ..schemas import SettingsUpdate, SettingsResponse
 from ..config import settings as app_settings
+import requests
 
 router = APIRouter()
+
+
+@router.post("/settings/check-models")
+async def check_available_models(
+    base_url: str = Body(..., embed=True),
+    api_key: str = Body(..., embed=True)
+):
+    """
+    제공된 Base URL과 API Key로 모델 목록을 조회합니다.
+    """
+    try:
+        # 마지막 슬래시 제거
+        if base_url.endswith("/"):
+            base_url = base_url[:-1]
+            
+        headers = {"Authorization": f"Bearer {api_key}"}
+        response = requests.get(f"{base_url}/models", headers=headers, timeout=5)
+        
+        response.raise_for_status()
+        data = response.json()
+        
+        # OpenAI 표준 포맷: {"data": [{"id": "model-id", ...}, ...]}
+        models = [model["id"] for model in data.get("data", [])]
+        return {"models": models}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"모델 목록을 불러오는데 실패했습니다: {str(e)}"
+        )
 
 
 @router.get("/settings", response_model=SettingsResponse)

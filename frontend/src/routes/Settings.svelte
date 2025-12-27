@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { getSettings, updateSettings } from "../lib/api.js";
+  import { getSettings, updateSettings, checkModels } from "../lib/api.js";
   import { userSettings, successMessage, errorMessage } from "../lib/stores.js";
 
   let settings = {
@@ -11,6 +11,14 @@
     column_name: "Issue",
     few_shot_examples: "",
   };
+  let availableModels = [
+    "gpt-4o-mini",
+    "gpt-4o",
+    "gpt-4-turbo",
+    "gpt-4",
+    "gpt-3.5-turbo",
+  ];
+  let fetchingModels = false;
 
   let loading = true;
   let saving = false;
@@ -46,6 +54,38 @@
       );
     } finally {
       saving = false;
+    }
+  }
+
+  async function fetchModels() {
+    if (!settings.openai_base_url || !settings.openai_api_key) {
+      errorMessage.set("Base URL과 API Key를 먼저 입력해주세요.");
+      return;
+    }
+
+    fetchingModels = true;
+    errorMessage.set("");
+    successMessage.set("");
+
+    try {
+      const models = await checkModels(
+        settings.openai_base_url,
+        settings.openai_api_key,
+      );
+      if (models && models.length > 0) {
+        availableModels = models;
+        // 중복 제거 및 정렬
+        availableModels = [...new Set(availableModels)].sort();
+        successMessage.set(`모델 목록을 성공적으로 불러왔습니다. (${models.length}개)`);
+      } else {
+        errorMessage.set("불러온 모델 목록이 비어있습니다.");
+      }
+    } catch (error) {
+      errorMessage.set(
+        `모델 목록 불러오기 실패: ${error.response?.data?.detail || error.message}`,
+      );
+    } finally {
+      fetchingModels = false;
     }
   }
 </script>
@@ -131,6 +171,17 @@
             />
             <label class="label">
               <span class="label-text-alt">OpenAI 호환 API의 Base URL</span>
+              <button 
+                class="btn btn-xs btn-outline btn-primary" 
+                on:click={fetchModels}
+                disabled={fetchingModels}
+              >
+                {#if fetchingModels}
+                  <span class="loading loading-spinner loading-xs"></span>
+                {:else}
+                  모델 목록 불러오기
+                {/if}
+              </button>
             </label>
           </div>
 
@@ -138,18 +189,20 @@
             <label class="label">
               <span class="label-text font-medium">Model Name</span>
             </label>
-            <select
-              class="select select-bordered w-full"
-              bind:value={settings.model_name}
-            >
-              <option value="gpt-4o-mini">gpt-4o-mini (추천)</option>
-              <option value="gpt-4o">gpt-4o</option>
-              <option value="gpt-4-turbo">gpt-4-turbo</option>
-              <option value="gpt-4">gpt-4</option>
-              <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-            </select>
+            <input 
+              type="text" 
+              list="model-options" 
+              class="input input-bordered w-full" 
+              bind:value={settings.model_name} 
+              placeholder="모델 이름을 입력하거나 선택하세요"
+            />
+            <datalist id="model-options">
+              {#each availableModels as model}
+                <option value={model} />
+              {/each}
+            </datalist>
             <label class="label">
-              <span class="label-text-alt">사용할 모델을 선택하세요</span>
+              <span class="label-text-alt">사용할 모델을 선택하거나 직접 입력하세요</span>
             </label>
           </div>
         </div>

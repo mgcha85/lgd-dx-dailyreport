@@ -20,6 +20,14 @@ export async function updateSettings(settings) {
     return response.data;
 }
 
+export async function checkModels(baseUrl, apiKey) {
+    const response = await api.post('/settings/check-models', {
+        base_url: baseUrl,
+        api_key: apiKey
+    });
+    return response.data.models;
+}
+
 // Upload API
 export async function uploadFile(file) {
     const formData = new FormData();
