@@ -5,7 +5,7 @@ from openpyxl.utils import range_boundaries
 from pathlib import Path
 from typing import Optional
 
-def convert_xlsb_to_xlsx(file_path: Path) -> Path:
+def convert_xlsb_to_xlsx(file_path: Path, sheet_name: Optional[str] = None) -> Path:
     """
     1. xlsb -> xlsx 변환
     """
@@ -16,15 +16,27 @@ def convert_xlsb_to_xlsx(file_path: Path) -> Path:
         return file_path
 
     # Read xlsb using pandas (requires pyxlsb)
-    df = pd.read_excel(file_path, engine='pyxlsb')
+    # sheet_name이 있으면 해당 시트만 읽음, 없으면 첫번째 시트(0)
+    # User requested: "xlsb 상태에서 user에게 받은 sheet_name 추출"
+    try:
+        if sheet_name:
+            df = pd.read_excel(file_path, engine='pyxlsb', sheet_name=sheet_name)
+        else:
+            df = pd.read_excel(file_path, engine='pyxlsb')
+    except Exception as e:
+        # 시트 찾기 실패 시 등의 에러 처리
+        print(f"Error reading xlsb: {e}")
+        # 혹시 시트 이름이 달라서 에러나면 기본값(첫번째)으로 시도할지?
+        # User implies extracting 'the sheet'. If it fails, we should probably fail or fallback.
+        # Fallback to 0 might be safer if name mismatch, but let's stick to explicit first.
+        # But if fail, raise for now to debug.
+        raise e
     
     new_path = file_path.with_suffix('.xlsx')
     # Save as xlsx
+    # User said: "그걸 xlsx로 변환하고 저장을 하면" -> to_excel implicitly creates a sheet (default 'Sheet1')
     df.to_excel(new_path, index=False)
     
-    # Optional: remove original file? Keeping it for now might be safer unless disk space is issue.
-    # but requirement implies replacing/processing. 
-    # Let's keep original for backup but return new path.
     return new_path
 
 def preprocess_structure(file_path: Path, sheet_name: Optional[str] = None) -> openpyxl.Workbook:
@@ -191,18 +203,18 @@ def run_preprocessing_pipeline(file_path: Path, sheet_name: Optional[str] = None
     파이프라인 실행
     """
     # 1. Convert
-    xlsx_path = convert_xlsb_to_xlsx(file_path)
+    # xlsb일 경우 sheet_name을 사용하여 해당 시트만 추출하여 변환
+    xlsx_path = convert_xlsb_to_xlsx(file_path, sheet_name=sheet_name)
     
     try:
         # 2. Structure Preprocessing
-        wb = preprocess_structure(xlsx_path, sheet_name=sheet_name)
+        # xlsx로 변환된 후에는 sheet_name 없이(또는 기본 시트로) 로드해야 함
+        # 변환된 파일은 보통 'Sheet1'이거나 단일 시트이므로 active sheet 사용
+        wb = preprocess_structure(xlsx_path, sheet_name=None)
         
         # 3. Issue Column Consolidation
-        # Need to determine sheet name if not provided?
-        if not sheet_name:
-            sheet_name = wb.sheetnames[0]
-            
-        consolidate_issue_column(wb, sheet_name=sheet_name)
+        # 마찬가지로 sheet_name 없이 처리
+        consolidate_issue_column(wb, sheet_name=None)
         
         # Save
         processed_path = xlsx_path.with_name(f"processed_{xlsx_path.name}")
