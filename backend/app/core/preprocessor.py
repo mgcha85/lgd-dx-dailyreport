@@ -209,6 +209,7 @@ def run_preprocessing_pipeline(file_path: Path, sheet_name: Optional[str] = None
         wb.save(processed_path)
         wb.close()
         
+        print(f"saved at: {processed_path}")
         return processed_path
         
     except Exception as e:
