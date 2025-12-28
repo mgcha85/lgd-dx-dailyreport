@@ -5,7 +5,7 @@ from fastapi import UploadFile
 import shutil
 
 
-ALLOWED_EXTENSIONS = {'.xlsx', '.xls', '.pptx'}
+ALLOWED_EXTENSIONS = {'.xlsx', '.xls', '.pptx', '.xlsb'}
 
 
 def is_allowed_file(filename: str) -> bool:

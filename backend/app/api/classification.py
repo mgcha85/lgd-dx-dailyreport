@@ -103,13 +103,17 @@ async def classify_file(
                 failed_count += 1
                 logger.warning(f"Row {idx + 1}: 분류 실패")
         
-        # 결과 DataFrame 생성
-        result_df = excel_handler.add_classification_columns(df, classifications)
-        
-        # 결과 파일 저장
+        # 결과 파일 저장 (기존 파일에 컬럼 추가)
         result_filename = f"classified_{file_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         result_path = Path(settings.results_dir) / result_filename
-        excel_handler.write_excel(result_df, str(result_path), request.sheet_name)
+        
+        # append_results_to_file 사용 (merged cells 유지)
+        excel_handler.append_results_to_file(
+            original_file_path=str(file_path),
+            output_file_path=str(result_path),
+            classifications=classifications,
+            sheet_name=request.sheet_name
+        )
         
         # 이력 업데이트
         history.status = "completed"

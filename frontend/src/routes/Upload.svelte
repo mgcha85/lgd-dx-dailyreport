@@ -148,14 +148,14 @@
                     클릭하거나 파일을 여기로 드래그하세요
                 </p>
                 <p class="text-sm text-base-content/60">
-                    Excel (.xlsx, .xls) 또는 PowerPoint (.pptx) 파일
+                    Excel (.xlsx, .xls, .xlsb) 또는 PowerPoint (.pptx) 파일
                 </p>
 
                 <input
                     id="fileInput"
                     type="file"
                     class="hidden"
-                    accept=".xlsx,.xls,.pptx"
+                    accept=".xlsx,.xls,.xlsb,.pptx"
                     on:change={handleFileSelect}
                 />
             </div>
