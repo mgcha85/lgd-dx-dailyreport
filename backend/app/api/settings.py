@@ -55,6 +55,7 @@ def get_settings(db: Session = Depends(get_db)):
             model_name=app_settings.openai_model,
             sheet_name=app_settings.default_sheet_name,
             column_name=app_settings.default_column_name,
+            prompt=app_settings.default_prompt,
             few_shot_examples=""
         )
         db.add(user_settings)

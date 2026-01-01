@@ -1,6 +1,12 @@
 <script>
     import { onMount } from "svelte";
-    import { currentTab, errorMessage, successMessage } from "./lib/stores.js";
+    import {
+        currentTab,
+        errorMessage,
+        successMessage,
+        userSettings,
+    } from "./lib/stores.js";
+    import { getSettings } from "./lib/api.js";
     import Upload from "./routes/Upload.svelte";
     import Result from "./routes/Result.svelte";
     import History from "./routes/History.svelte";
@@ -12,8 +18,24 @@
         activeTab = value;
     });
 
+    // Load settings from DB on app initialization
+    onMount(async () => {
+        try {
+            const settings = await getSettings();
+            userSettings.set(settings);
+        } catch (error) {
+            console.error("Failed to load settings:", error);
+        }
+    });
+
     function setTab(tab) {
         currentTab.set(tab);
+        errorMessage.set("");
+        successMessage.set("");
+    }
+
+    function goToHome() {
+        currentTab.set("upload");
         errorMessage.set("");
         successMessage.set("");
     }
@@ -25,7 +47,10 @@
         class="navbar bg-gradient-to-r from-primary to-secondary text-primary-content shadow-lg"
     >
         <div class="flex-1">
-            <a class="btn btn-ghost normal-case text-xl md:text-2xl font-bold">
+            <a
+                class="btn btn-ghost normal-case text-xl md:text-2xl font-bold cursor-pointer"
+                on:click={goToHome}
+            >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"

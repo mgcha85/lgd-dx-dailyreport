@@ -9,6 +9,7 @@
     model_name: "gpt-4o-mini",
     sheet_name: "일보_DPU",
     column_name: "Issue",
+    prompt: "",
     few_shot_examples: "",
   };
   let availableModels = [
@@ -76,7 +77,9 @@
         availableModels = models;
         // 중복 제거 및 정렬
         availableModels = [...new Set(availableModels)].sort();
-        successMessage.set(`모델 목록을 성공적으로 불러왔습니다. (${models.length}개)`);
+        successMessage.set(
+          `모델 목록을 성공적으로 불러왔습니다. (${models.length}개)`,
+        );
       } else {
         errorMessage.set("불러온 모델 목록이 비어있습니다.");
       }
@@ -171,8 +174,8 @@
             />
             <label class="label">
               <span class="label-text-alt">OpenAI 호환 API의 Base URL</span>
-              <button 
-                class="btn btn-xs btn-outline btn-primary" 
+              <button
+                class="btn btn-xs btn-outline btn-primary"
                 on:click={fetchModels}
                 disabled={fetchingModels}
               >
@@ -189,11 +192,11 @@
             <label class="label">
               <span class="label-text font-medium">Model Name</span>
             </label>
-            <input 
-              type="text" 
-              list="model-options" 
-              class="input input-bordered w-full" 
-              bind:value={settings.model_name} 
+            <input
+              type="text"
+              list="model-options"
+              class="input input-bordered w-full"
+              bind:value={settings.model_name}
               placeholder="모델 이름을 입력하거나 선택하세요"
             />
             <datalist id="model-options">
@@ -202,7 +205,9 @@
               {/each}
             </datalist>
             <label class="label">
-              <span class="label-text-alt">사용할 모델을 선택하거나 직접 입력하세요</span>
+              <span class="label-text-alt"
+                >사용할 모델을 선택하거나 직접 입력하세요</span
+              >
             </label>
           </div>
         </div>
@@ -263,6 +268,21 @@
               <span class="label-text-alt">분류할 컬럼 이름</span>
             </label>
           </div>
+        </div>
+
+        <div class="form-control mt-4">
+          <label class="label">
+            <span class="label-text font-medium">기본 프롬프트</span>
+          </label>
+          <textarea
+            bind:value={settings.prompt}
+            placeholder="분류 프롬프트를 입력하세요..."
+            class="textarea textarea-bordered h-24"
+          ></textarea>
+          <label class="label">
+            <span class="label-text-alt">파일 분류 시 사용할 기본 프롬프트</span
+            >
+          </label>
         </div>
       </div>
     </div>

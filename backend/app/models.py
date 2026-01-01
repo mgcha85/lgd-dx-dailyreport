@@ -32,5 +32,6 @@ class UserSettings(Base):
     model_name = Column(String, default="gpt-4o-mini")
     sheet_name = Column(String, default="일보_DPU")
     column_name = Column(String, default="Issue")
+    prompt = Column(Text, nullable=True)
     few_shot_examples = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

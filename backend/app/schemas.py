@@ -9,6 +9,7 @@ class SettingsBase(BaseModel):
     model_name: str = "gpt-4o-mini"
     sheet_name: str = "일보_DPU"
     column_name: str = "Issue"
+    prompt: Optional[str] = None
     few_shot_examples: Optional[str] = None
 
 

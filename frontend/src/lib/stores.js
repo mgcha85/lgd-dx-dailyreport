@@ -11,9 +11,23 @@ export const userSettings = writable({
     openai_api_key: '',
     openai_base_url: 'https://api.openai.com/v1',
     model_name: 'gpt-4o-mini',
-    sheet_name: '일보_DPU',
-    column_name: 'Issue',
+    sheet_name: '',
+    column_name: '',
+    prompt: '',
     few_shot_examples: ''
+});
+
+// 업로드된 파일 (탭 전환 시에도 유지)
+export const uploadedFile = writable({
+    file: null,
+    fileName: ''
+});
+
+// 분류 진행상황
+export const classificationProgress = writable({
+    current: 0,
+    total: 0,
+    isActive: false
 });
 
 // 로딩 상태
@@ -24,3 +38,4 @@ export const errorMessage = writable('');
 
 // 성공 메시지
 export const successMessage = writable('');
+

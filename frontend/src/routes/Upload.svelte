@@ -1,5 +1,6 @@
 <script>
-    import { uploadFile, classifyFile } from "../lib/api.js";
+    import { onMount } from "svelte";
+    import { uploadFile, classifyFileWithProgress } from "../lib/api.js";
     import {
         userSettings,
         classificationResult,
@@ -7,20 +8,47 @@
         isLoading,
         errorMessage,
         successMessage,
+        uploadedFile,
+        classificationProgress,
     } from "../lib/stores.js";
 
-    let selectedFile = null;
-    let fileName = "";
-    let prompt =
-        "다음 Issue 내용을 분석하여 불량명, 설비명, 조치내용을 JSON 형식으로 추출해주세요.";
-    let sheetName = "";
-    let columnName = "";
     let uploading = false;
     let classifying = false;
     let dragActive = false;
 
-    $: sheetName = $userSettings.sheet_name || "일보_DPU";
-    $: columnName = $userSettings.column_name || "Issue";
+    // Local reactive variables that sync with stores
+    let selectedFile = null;
+    let fileName = "";
+    let sheetName = "";
+    let columnName = "";
+    let prompt = "";
+
+    // Progress bar values
+    let progress = { current: 0, total: 0, isActive: false };
+
+    // Subscribe to stores
+    const unsubscribeFile = uploadedFile.subscribe((value) => {
+        selectedFile = value.file;
+        fileName = value.fileName;
+    });
+
+    const unsubscribeSettings = userSettings.subscribe((value) => {
+        sheetName = value.sheet_name || "";
+        columnName = value.column_name || "";
+        prompt = value.prompt || "";
+    });
+
+    const unsubscribeProgress = classificationProgress.subscribe((value) => {
+        progress = value;
+    });
+
+    // Cleanup subscriptions on destroy
+    import { onDestroy } from "svelte";
+    onDestroy(() => {
+        unsubscribeFile();
+        unsubscribeSettings();
+        unsubscribeProgress();
+    });
 
     function handleDragOver(e) {
         e.preventDefault();
@@ -38,16 +66,31 @@
 
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            selectedFile = files[0];
-            fileName = files[0].name;
+            setFile(files[0]);
         }
     }
 
     function handleFileSelect(e) {
         const files = e.target.files;
         if (files.length > 0) {
-            selectedFile = files[0];
-            fileName = files[0].name;
+            setFile(files[0]);
+        }
+    }
+
+    function setFile(file) {
+        selectedFile = file;
+        fileName = file.name;
+        uploadedFile.set({ file, fileName: file.name });
+    }
+
+    function cancelFileSelection() {
+        selectedFile = null;
+        fileName = "";
+        uploadedFile.set({ file: null, fileName: "" });
+        // Reset the file input
+        const fileInput = document.getElementById("fileInput");
+        if (fileInput) {
+            fileInput.value = "";
         }
     }
 
@@ -60,6 +103,7 @@
         errorMessage.set("");
         successMessage.set("");
         uploading = true;
+        classificationProgress.set({ current: 0, total: 0, isActive: false });
 
         try {
             const uploadResult = await uploadFile(selectedFile);
@@ -77,8 +121,23 @@
                 prompt: prompt,
             };
 
-            const classifyResult = await classifyFile(classifyData);
+            // Use streaming classification with progress
+            const classifyResult = await classifyFileWithProgress(
+                classifyData,
+                (progressData) => {
+                    classificationProgress.set({
+                        current: progressData.current,
+                        total: progressData.total,
+                        isActive: true,
+                    });
+                },
+            );
 
+            classificationProgress.set({
+                current: 0,
+                total: 0,
+                isActive: false,
+            });
             classificationResult.set(classifyResult);
             successMessage.set(
                 `분류가 완료되었습니다! (성공: ${classifyResult.processed_rows}, 실패: ${classifyResult.failed_rows})`,
@@ -91,6 +150,11 @@
             errorMessage.set(
                 `오류 발생: ${error.response?.data?.detail || error.message}`,
             );
+            classificationProgress.set({
+                current: 0,
+                total: 0,
+                isActive: false,
+            });
         } finally {
             uploading = false;
             classifying = false;
@@ -161,21 +225,44 @@
             </div>
 
             {#if selectedFile}
-                <div class="alert alert-info">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        class="stroke-current shrink-0 w-6 h-6"
+                <div class="alert alert-info flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            class="stroke-current shrink-0 w-6 h-6"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <span><strong>{fileName}</strong> 선택됨</span>
+                    </div>
+                    <button
+                        class="btn btn-ghost btn-sm text-error"
+                        on:click|stopPropagation={cancelFileSelection}
+                        disabled={uploading || classifying}
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <span><strong>{fileName}</strong> 선택됨</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="w-5 h-5"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                        취소
+                    </button>
                 </div>
             {/if}
         </div>
@@ -210,7 +297,7 @@
                     <input
                         type="text"
                         bind:value={sheetName}
-                        placeholder="일보_DPU"
+                        placeholder="시트 이름을 입력하세요"
                         class="input input-bordered w-full"
                     />
                 </div>
@@ -222,7 +309,7 @@
                     <input
                         type="text"
                         bind:value={columnName}
-                        placeholder="Issue"
+                        placeholder="컬럼 이름을 입력하세요"
                         class="input input-bordered w-full"
                     />
                 </div>
@@ -238,6 +325,27 @@
                     class="textarea textarea-bordered h-24"
                 ></textarea>
             </div>
+
+            <!-- Progress Bar -->
+            {#if progress.isActive}
+                <div class="mt-4">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-medium">분류 진행 중...</span>
+                        <span class="text-sm font-medium"
+                            >{progress.current} / {progress.total}</span
+                        >
+                    </div>
+                    <progress
+                        class="progress progress-primary w-full"
+                        value={progress.current}
+                        max={progress.total}
+                    ></progress>
+                    <p class="text-xs text-base-content/60 mt-1">
+                        {Math.round((progress.current / progress.total) * 100)}%
+                        완료
+                    </p>
+                </div>
+            {/if}
 
             <div class="card-actions justify-end mt-4">
                 <button
