@@ -7,6 +7,13 @@ LOG_DIR="$BASE_DIR/logs"
 # Create logs directory if it doesn't exist
 mkdir -p "$LOG_DIR"
 
+# Load nvm if available
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Add uv to PATH if available
+export PATH="$HOME/.local/bin:$PATH"
+
 echo "Starting Application..."
 
 # Start Backend
@@ -28,6 +35,9 @@ FRONTEND_PID=$!
 echo $FRONTEND_PID > "$LOG_DIR/frontend.pid"
 echo "Frontend started with PID $FRONTEND_PID. Logs: $LOG_DIR/frontend.log"
 
+echo ""
 echo "Application started successfully."
-echo "Backend: http://localhost:8000"
-echo "Frontend: http://localhost:5173"
+echo "Backend: http://localhost:8000 (or http://<your-ip>:8000)"
+echo "Frontend: http://localhost:5173 (or http://<your-ip>:5173)"
+echo ""
+echo "Use './stop.sh' to stop the application."
