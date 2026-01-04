@@ -7,7 +7,7 @@
     openai_api_key: "",
     openai_base_url: "https://api.openai.com/v1",
     model_name: "gpt-4o-mini",
-    sheet_name: "일보_DPU",
+    sheet_name: "일보_Worst55",
     column_name: "Issue",
     prompt: "",
     few_shot_examples: "",
@@ -246,7 +246,7 @@
             <input
               type="text"
               bind:value={settings.sheet_name}
-              placeholder="일보_DPU"
+              placeholder="일보_Worst55"
               class="input input-bordered w-full"
             />
             <label class="label">

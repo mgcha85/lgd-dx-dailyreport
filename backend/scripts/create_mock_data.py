@@ -39,8 +39,8 @@ def create_mock_excel():
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
     
-    mock_file_path = upload_dir / "mock_일보_DPU_20250101.xlsx"
-    df.write_excel(str(mock_file_path), worksheet="일보_DPU")
+    mock_file_path = upload_dir / "mock_일보_Worst55_20250101.xlsx"
+    df.write_excel(str(mock_file_path), worksheet="일보_Worst55")
     
     print(f"✅ Mock Excel 파일 생성: {mock_file_path}")
     return str(mock_file_path)
@@ -50,10 +50,10 @@ def create_mock_history(db, mock_file_path):
     """Mock 이력 데이터 생성"""
     # 완료된 이력
     history1 = ClassificationHistory(
-        filename="mock_일보_DPU_20250101.xlsx",
+        filename="mock_일보_Worst55_20250101.xlsx",
         file_path=mock_file_path,
         result_path=None,
-        sheet_name="일보_DPU",
+        sheet_name="일보_Worst55",
         column_name="Issue",
         status="completed",
         total_rows=5,
@@ -65,9 +65,9 @@ def create_mock_history(db, mock_file_path):
     
     # 진행 중 이력
     history2 = ClassificationHistory(
-        filename="일보_DPU_20241231.xlsx",
-        file_path="/app/data/uploads/일보_DPU_20241231.xlsx",
-        sheet_name="일보_DPU",
+        filename="일보_Worst55_20241231.xlsx",
+        file_path="/app/data/uploads/일보_Worst55_20241231.xlsx",
+        sheet_name="일보_Worst55",
         column_name="Issue",
         status="processing",
         total_rows=10,
@@ -78,9 +78,9 @@ def create_mock_history(db, mock_file_path):
     
     # 실패한 이력
     history3 = ClassificationHistory(
-        filename="일보_DPU_20241230.xlsx",
-        file_path="/app/data/uploads/일보_DPU_20241230.xlsx",
-        sheet_name="일보_DPU",
+        filename="일보_Worst55_20241230.xlsx",
+        file_path="/app/data/uploads/일보_Worst55_20241230.xlsx",
+        sheet_name="일보_Worst55",
         column_name="Issue",
         status="failed",
         total_rows=8,
@@ -109,7 +109,7 @@ def create_mock_settings(db):
         openai_api_key="",  # 실제 테스트 시 유효한 키 입력 필요
         openai_base_url="https://api.openai.com/v1",
         model_name="gpt-4o-mini",
-        sheet_name="일보_DPU",
+        sheet_name="일보_Worst55",
         column_name="Issue",
         few_shot_examples="""예제 1:
 Issue: "DPU 불량 발생, 설비명: LINE-A, 조치: 재작업 실시"

@@ -9,6 +9,7 @@ openpyxl==3.1.2
 xlsxwriter==3.1.9
 xlsx2csv==0.8.2
 openai==1.10.0
+requests==2.31.0
 pytest==7.4.4
 pytest-asyncio==0.23.3
 httpx==0.26.0

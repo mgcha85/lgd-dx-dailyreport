@@ -1,9 +1,21 @@
 from openai import OpenAI
 import json
+import os
+import random
 from typing import Dict, Optional, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+# Mock 응답 데이터
+MOCK_RESPONSES = [
+    {"불량명": "스크래치", "설비명": "컨베이어 A-1", "조치내용": "청소 및 점검 완료"},
+    {"불량명": "기포 발생", "설비명": "코팅기 B-2", "조치내용": "온도 조절 및 재가동"},
+    {"불량명": "이물질 혼입", "설비명": "혼합기 C-3", "조치내용": "필터 교체 및 세척"},
+    {"불량명": "치수 불량", "설비명": "프레스 D-4", "조치내용": "금형 점검 및 조정"},
+    {"불량명": "색상 불량", "설비명": "믹서기 E-5", "조치내용": "원료 비율 재조정"},
+]
 
 
 class LLMClassifier:
@@ -13,7 +25,8 @@ class LLMClassifier:
         self,
         api_key: str,
         base_url: str = "https://api.openai.com/v1",
-        model: str = "gpt-4o-mini"
+        model: str = "gpt-4o-mini",
+        mock_mode: bool = False
     ):
         """
         LLM Classifier 초기화
@@ -22,11 +35,16 @@ class LLMClassifier:
             api_key: OpenAI API 키
             base_url: API Base URL
             model: 사용할 모델명
+            mock_mode: Mock 모드 사용 여부
         """
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url=base_url
-        )
+        self.mock_mode = mock_mode
+        if not mock_mode:
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url=base_url
+            )
+        else:
+            self.client = None
         self.model = model
     
     def classify(
@@ -49,6 +67,14 @@ class LLMClassifier:
             (분류 결과 dict, 성공 여부)
             분류 결과: {"불량명": "", "설비명": "", "조치내용": ""}
         """
+        # Mock 모드일 때 랜덤 응답 반환
+        if self.mock_mode:
+            import time
+            time.sleep(0.2)  # 실제 API 호출처럼 약간의 딜레이
+            mock_response = random.choice(MOCK_RESPONSES).copy()
+            logger.info(f"[MOCK] 분류 결과: {mock_response}")
+            return mock_response, True
+        
         # 전체 프롬프트 구성
         system_prompt = self._build_system_prompt(few_shot_examples)
         user_message = f"{prompt}\n\nIssue 내용: {issue_content}"

@@ -7,7 +7,7 @@ class SettingsBase(BaseModel):
     openai_api_key: Optional[str] = None
     openai_base_url: str = "https://api.openai.com/v1"
     model_name: str = "gpt-4o-mini"
-    sheet_name: str = "일보_DPU"
+    sheet_name: str = "일보_Worst55"
     column_name: str = "Issue"
     prompt: Optional[str] = None
     few_shot_examples: Optional[str] = None
@@ -33,7 +33,7 @@ class FileUploadResponse(BaseModel):
 
 class ClassificationRequest(BaseModel):
     file_path: str
-    sheet_name: str = "일보_DPU"
+    sheet_name: str = "일보_Worst55"
     column_name: str = "Issue"
     prompt: str = "다음 Issue 내용을 분석하여 불량명, 설비명, 조치내용을 JSON 형식으로 추출해주세요."
 

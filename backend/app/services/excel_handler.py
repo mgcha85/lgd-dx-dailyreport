@@ -11,7 +11,7 @@ class ExcelHandler:
     @staticmethod
     def read_excel(
         file_path: str,
-        sheet_name: str = "일보_DPU"
+        sheet_name: str = "일보_Worst55"
     ) -> pl.DataFrame:
         """
         Excel 파일을 읽어서 Polars DataFrame으로 반환
@@ -35,7 +35,7 @@ class ExcelHandler:
         original_file_path: str,
         output_file_path: str,
         classifications: List[Dict[str, str]],
-        sheet_name: str = "일보_DPU"
+        sheet_name: str = "일보_Worst55"
     ) -> str:
         """
         기존 엑셀 파일의 서식(병합 등)을 유지하면서 결과 컬럼 추가
@@ -93,7 +93,7 @@ class ExcelHandler:
     def write_excel(
         df: pl.DataFrame,
         file_path: str,
-        sheet_name: str = "일보_DPU"
+        sheet_name: str = "일보_Worst55"
     ) -> str:
         """
         Polars DataFrame을 Excel 파일로 저장

@@ -63,7 +63,8 @@ async def classify_file(
         classifier = LLMClassifier(
             api_key=user_settings.openai_api_key,
             base_url=user_settings.openai_base_url,
-            model=user_settings.model_name
+            model=user_settings.model_name,
+            mock_mode=settings.mock_llm
         )
         
         # 각 row 처리
@@ -195,7 +196,8 @@ async def classify_file_stream(
             classifier = LLMClassifier(
                 api_key=user_settings.openai_api_key,
                 base_url=user_settings.openai_base_url,
-                model=user_settings.model_name
+                model=user_settings.model_name,
+                mock_mode=settings.mock_llm
             )
             
             # 각 row 처리

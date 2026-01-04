@@ -30,7 +30,7 @@ class UserSettings(Base):
     openai_api_key = Column(String, nullable=True)
     openai_base_url = Column(String, default="https://api.openai.com/v1")
     model_name = Column(String, default="gpt-4o-mini")
-    sheet_name = Column(String, default="일보_DPU")
+    sheet_name = Column(String, default="일보_Worst55")
     column_name = Column(String, default="Issue")
     prompt = Column(Text, nullable=True)
     few_shot_examples = Column(Text, nullable=True)

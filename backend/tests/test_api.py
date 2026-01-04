@@ -23,7 +23,7 @@ def test_get_settings_default(client, test_db):
     assert response.status_code == 200
     data = response.json()
     assert "openai_api_key" in data
-    assert data["sheet_name"] == "일보_DPU"
+    assert data["sheet_name"] == "일보_Worst55"
     assert data["column_name"] == "Issue"
 
 
@@ -81,7 +81,7 @@ def test_get_history_with_data(client, test_db):
     history = ClassificationHistory(
         filename="test.xlsx",
         file_path="/path/to/test.xlsx",
-        sheet_name="일보_DPU",
+        sheet_name="일보_Worst55",
         column_name="Issue",
         status="completed",
         total_rows=10,
@@ -104,7 +104,7 @@ def test_get_history_by_id(client, test_db):
     history = ClassificationHistory(
         filename="test.xlsx",
         file_path="/path/to/test.xlsx",
-        sheet_name="일보_DPU",
+        sheet_name="일보_Worst55",
         column_name="Issue",
         status="completed"
     )

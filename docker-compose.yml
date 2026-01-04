@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    container_name: dailyreport-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MOCK_LLM=true
+      - DATABASE_URL=sqlite:///./data/app.db
+      - UPLOAD_DIR=/app/data/uploads
+      - RESULTS_DIR=/app/data/results
+    volumes:
+      - ./backend/data:/app/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: dailyreport-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    links:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
