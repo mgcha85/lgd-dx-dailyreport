@@ -1,18 +1,18 @@
-import os
 import pandas as pd
 import openpyxl
 from openpyxl.utils import range_boundaries
 from pathlib import Path
 from typing import Optional
 
+
 def convert_xlsb_to_xlsx(file_path: Path, sheet_name: Optional[str] = None) -> Path:
     """
     1. xlsb -> xlsx 변환
     """
-    if str(file_path).endswith('.xlsx'):
+    if str(file_path).endswith(".xlsx"):
         return file_path
-        
-    if not str(file_path).endswith('.xlsb'):
+
+    if not str(file_path).endswith(".xlsb"):
         return file_path
 
     # Read xlsb using pandas (requires pyxlsb)
@@ -20,9 +20,9 @@ def convert_xlsb_to_xlsx(file_path: Path, sheet_name: Optional[str] = None) -> P
     # User requested: "xlsb 상태에서 user에게 받은 sheet_name 추출"
     try:
         if sheet_name:
-            df = pd.read_excel(file_path, engine='pyxlsb', sheet_name=sheet_name)
+            df = pd.read_excel(file_path, engine="pyxlsb", sheet_name=sheet_name)
         else:
-            df = pd.read_excel(file_path, engine='pyxlsb')
+            df = pd.read_excel(file_path, engine="pyxlsb")
     except Exception as e:
         # 시트 찾기 실패 시 등의 에러 처리
         print(f"Error reading xlsb: {e}")
@@ -31,15 +31,18 @@ def convert_xlsb_to_xlsx(file_path: Path, sheet_name: Optional[str] = None) -> P
         # Fallback to 0 might be safer if name mismatch, but let's stick to explicit first.
         # But if fail, raise for now to debug.
         raise e
-    
-    new_path = file_path.with_suffix('.xlsx')
+
+    new_path = file_path.with_suffix(".xlsx")
     # Save as xlsx
     # User said: "그걸 xlsx로 변환하고 저장을 하면" -> to_excel implicitly creates a sheet (default 'Sheet1')
     df.to_excel(new_path, index=False)
-    
+
     return new_path
 
-def preprocess_structure(file_path: Path, sheet_name: Optional[str] = None) -> openpyxl.Workbook:
+
+def preprocess_structure(
+    file_path: Path, sheet_name: Optional[str] = None
+) -> openpyxl.Workbook:
     """
     2. 구조 전처리: B4부터 시작, 병합 셀 해제 및 값 채우기 (Forward Fill style)
     """
@@ -51,29 +54,29 @@ def preprocess_structure(file_path: Path, sheet_name: Optional[str] = None) -> o
 
     # Start processing from row 4
     start_row = 4
-    
+
     # 1. Unmerge all cells first to handle them individually
     # We need to collect merged ranges first because unmerging modifies the collection
     merged_ranges = list(ws.merged_cells.ranges)
-    
+
     for merged_range in merged_ranges:
         # Get boundaries
         min_col, min_row, max_col, max_row = range_boundaries(str(merged_range))
-        
+
         # Only process if it affects our area of interest (Row >= 4)
         if max_row < start_row:
             continue
-            
+
         # Get the value of the top-left cell
         top_left_value = ws.cell(row=min_row, column=min_col).value
-        
+
         # Unmerge
         ws.unmerge_cells(str(merged_range))
-        
+
         # Fill all cells in the range with the top-left value
         for row in range(min_row, max_row + 1):
             for col in range(min_col, max_col + 1):
-                if row >= start_row: # Valid data area
+                if row >= start_row:  # Valid data area
                     cell = ws.cell(row=row, column=col)
                     cell.value = top_left_value
 
@@ -82,10 +85,13 @@ def preprocess_structure(file_path: Path, sheet_name: Optional[str] = None) -> o
     # Unmerging and filling top-left value handles the explicit merged cells.
     # If there are just empty cells that meant "ditto", that's harder to guess without explicit merge.
     # Assuming "merged cells" was the main issue.
-    
+
     return wb
 
-def consolidate_issue_column(wb: openpyxl.Workbook, sheet_name: Optional[str], issue_col_name: str = "Issue") -> Path:
+
+def consolidate_issue_column(
+    wb: openpyxl.Workbook, sheet_name: Optional[str], issue_col_name: str = "Issue"
+) -> Path:
     """
     3. Issue 컬럼 병합 처리
     - Issue 컬럼을 찾아서
@@ -102,12 +108,12 @@ def consolidate_issue_column(wb: openpyxl.Workbook, sheet_name: Optional[str], i
     # Let's assume headers are at row 3 (if data starts row 4).
     header_row = 3
     issue_col_idx = None
-    
+
     for cell in ws[header_row]:
         if cell.value and str(cell.value).strip() == issue_col_name:
             issue_col_idx = cell.column
             break
-    
+
     if not issue_col_idx:
         # Fallback: Search typical "Issue" column or return as is
         print("Issue column not found")
@@ -117,35 +123,35 @@ def consolidate_issue_column(wb: openpyxl.Workbook, sheet_name: Optional[str], i
     # Requirement: "Issue 칸에 있는 여러 셀... 모델 칸과 같은데 실제론 여러 셀... 순서대로 병합"
     # This implies the "Model" column (or the primary key column) drives the grouping.
     # If Model is merged (and we unmerged/filled it in step 2), then we can group by Model.
-    
+
     # We need to find the "Model" column or a grouping key.
-    # Or, purely look at Issue column? 
+    # Or, purely look at Issue column?
     # "눈으로 보면 모델 칸과 같은데" means the visual height of the Issue cell matches the Model cell (which was merged).
     # Since we successfully propagated the Model value in Step 2, standard rows now have the same Model value.
     # So we can group consecutive rows that have the SAME Model value (and same Layer etc).
-    
+
     # 1. Identify distinct groups based on key columns (Layer, Model etc to the left of Issue).
     # Assuming columns before Issue are keys.
-    
+
     max_row = ws.max_row
     current_group_key = None
     current_group_rows = []
-    
+
     # Collect data to process
     # We will modify sheet in-place, so maybe iterate first to calculate merges, then apply.
-    
+
     # It's Complex to do in-place while iterating.
     # Strategy:
     # 1. Iterate rows 4 to Max.
     # 2. Build a key from columns 2 to Issue_Col-1.
     # 3. If key changes, finalize previous group.
-    
+
     # Note: Column 2 (B) is start.
-    cols_check = list(range(2, issue_col_idx)) # Columns B to right before Issue
-    
-    merged_regions = [] # (start_row, end_row, merged_text)
-    
-    for row in range(4, max_row + 2): # +2 to ensure flush of last group
+    cols_check = list(range(2, issue_col_idx))  # Columns B to right before Issue
+
+    merged_regions = []  # (start_row, end_row, merged_text)
+
+    for row in range(4, max_row + 2):  # +2 to ensure flush of last group
         # Get Key
         if row <= max_row:
             key_values = [ws.cell(row=row, column=c).value for c in cols_check]
@@ -162,68 +168,82 @@ def consolidate_issue_column(wb: openpyxl.Workbook, sheet_name: Optional[str], i
                     cell_val = ws.cell(row=r, column=issue_col_idx).value
                     if cell_val:
                         text_parts.append(str(cell_val).strip())
-                
+
                 full_text = "\n".join(text_parts)
-                
+
                 # Record merge action
                 if len(current_group_rows) > 0:
-                    merged_regions.append({
-                        "start_row": current_group_rows[0],
-                        "end_row": current_group_rows[-1],
-                        "text": full_text
-                    })
-            
+                    merged_regions.append(
+                        {
+                            "start_row": current_group_rows[0],
+                            "end_row": current_group_rows[-1],
+                            "text": full_text,
+                        }
+                    )
+
             # Start new group
             current_group_key = key
             current_group_rows = [row]
         else:
             current_group_rows.append(row)
-            
+
     # Apply merges
-    api_alignment = openpyxl.styles.Alignment(wrap_text=True, vertical='center')
-    
+    api_alignment = openpyxl.styles.Alignment(wrap_text=True, vertical="center")
+
     for region in merged_regions:
         s = region["start_row"]
         e = region["end_row"]
         txt = region["text"]
-        
+
         # Set text to top-left
         main_cell = ws.cell(row=s, column=issue_col_idx)
         main_cell.value = txt
         main_cell.alignment = api_alignment
-        
+
         # Merge if multiple rows
         if e > s:
-            ws.merge_cells(start_row=s, start_column=issue_col_idx, end_row=e, end_column=issue_col_idx)
-            
+            ws.merge_cells(
+                start_row=s,
+                start_column=issue_col_idx,
+                end_row=e,
+                end_column=issue_col_idx,
+            )
+
     return wb
 
-def run_preprocessing_pipeline(file_path: Path, sheet_name: Optional[str] = None) -> Path:
+
+def run_preprocessing_pipeline(
+    file_path: Path, sheet_name: Optional[str] = None, column_name: Optional[str] = None
+) -> Path:
     """
     파이프라인 실행
     """
     # 1. Convert
     # xlsb일 경우 sheet_name을 사용하여 해당 시트만 추출하여 변환
     xlsx_path = convert_xlsb_to_xlsx(file_path, sheet_name=sheet_name)
-    
+
     try:
         # 2. Structure Preprocessing
         # xlsx로 변환된 후에는 sheet_name 없이(또는 기본 시트로) 로드해야 함
         # 변환된 파일은 보통 'Sheet1'이거나 단일 시트이므로 active sheet 사용
         wb = preprocess_structure(xlsx_path, sheet_name=None)
-        
+
         # 3. Issue Column Consolidation
         # 마찬가지로 sheet_name 없이 처리
-        consolidate_issue_column(wb, sheet_name=None)
-        
+        if column_name:
+            consolidate_issue_column(wb, sheet_name=None, issue_col_name=column_name)
+        else:
+            # 기본값 'Issue' 사용
+            consolidate_issue_column(wb, sheet_name=None)
+
         # Save
         processed_path = xlsx_path.with_name(f"processed_{xlsx_path.name}")
         wb.save(processed_path)
         wb.close()
-        
+
         print(f"saved at: {processed_path}")
         return processed_path
-        
+
     except Exception as e:
         print(f"Preprocessing failed: {e}")
         # Return original if fail? Or raise?

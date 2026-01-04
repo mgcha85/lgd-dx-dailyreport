@@ -29,9 +29,11 @@ export async function checkModels(baseUrl, apiKey) {
 }
 
 // Upload API
-export async function uploadFile(file) {
+export async function uploadFile(file, sheetName, columnName) {
     const formData = new FormData();
     formData.append('file', file);
+    if (sheetName) formData.append('sheet_name', sheetName);
+    if (columnName) formData.append('column_name', columnName);
 
     const response = await api.post('/upload', formData, {
         headers: {

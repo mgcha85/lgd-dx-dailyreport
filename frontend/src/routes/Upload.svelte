@@ -106,7 +106,7 @@
         classificationProgress.set({ current: 0, total: 0, isActive: false });
 
         try {
-            const uploadResult = await uploadFile(selectedFile);
+            const uploadResult = await uploadFile(selectedFile, sheetName, columnName);
             successMessage.set(
                 `파일이 업로드되었습니다: ${uploadResult.filename}`,
             );
